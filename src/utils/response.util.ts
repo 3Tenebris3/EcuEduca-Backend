@@ -1,11 +1,13 @@
 /**
- * 
- * @param success boolean
- * @param code number
- * @param message string
- * @param data any
- * @param error object { details: string }
- * @returns 
+ * Función para crear una respuesta estandarizada para la API.
+ * La estructura devuelta es:
+ * {
+ *   "success": boolean,
+ *   "code": number,
+ *   "message": string,
+ *   "data": any,
+ *   "error": { "details": string }
+ * }
  */
 export function createResponse(
   success: boolean,
