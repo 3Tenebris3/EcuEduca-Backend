@@ -1,4 +1,5 @@
 import { db } from '../config/firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 /**
  * Métodos genéricos para interactuar con Firestore (CRUD).
@@ -45,4 +46,12 @@ export class FirebaseService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
   
+  // Listar todos los docs de una colección
+  static async getCollection(path: string) {
+    const snap = await db.collection(path).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // Exponer FieldValue util
+  static get FieldValue() { return FieldValue; }
 }

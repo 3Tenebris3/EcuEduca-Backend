@@ -1,16 +1,21 @@
-// src/routes/user.router.ts
 import { Router } from 'express';
 import { UserController } from '../controllers/user.controller';
 import { jwtAuthMiddleware } from '../middlewares/jwtAuth.middleware';
+import { authorize } from '../middlewares/role.middleware';
 
 export const userRouter = Router();
 
-/* ---------- rutas que dependen del token ---------- */
-userRouter.get('/me',      jwtAuthMiddleware, UserController.me);
+/* públicas para auth/register las manejas en auth.router.ts (no incluidas aquí) */
 
-/* CRUD (típicamente solo para admin) */
-userRouter.post('/',       jwtAuthMiddleware, UserController.create);
-userRouter.get('/:userId', jwtAuthMiddleware, UserController.getById);
-userRouter.put('/:userId', jwtAuthMiddleware, UserController.update);
-userRouter.delete('/:userId', jwtAuthMiddleware, UserController.delete);
-userRouter.get('/',        jwtAuthMiddleware, UserController.getAll);
+/* Rutas que requieren JWT */
+userRouter.use(jwtAuthMiddleware);
+
+/* Perfil propio */
+userRouter.get('/me', UserController.me);
+
+/* CRUD (admin) */
+userRouter.post('/',             authorize('admin'), UserController.create);
+userRouter.get('/',              authorize('admin'), UserController.getAll);
+userRouter.get('/:userId',       authorize('admin'), UserController.getById);
+userRouter.put('/:userId',       authorize('admin'), UserController.update);
+userRouter.delete('/:userId',    authorize('admin'), UserController.delete);
