@@ -1,36 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
-
-    /* --------- reglas de usuarios --------- */
-    match /users/{userId} {
-      allow read, update: if request.auth.uid == userId;
-      allow create, delete: if hasRole(['admin']);
-    }
-
-    /* --------- reglas de calificaciones --------- */
-    match /grades/{g} {
-      allow create: if hasRole(['teacher','admin']);
-      allow read: if hasRole(['admin','teacher']) ||
-                  request.auth.uid == resource.data.userId;
-    }
-
-    /* --------- resto de colecciones (ejemplo) --------- */
-    match /classes/{classId} {
-      allow read: if request.auth != null;
-      allow write: if hasRole(['admin','teacher']);
-    }
-
-    /* ---------- función auxiliar ---------- */
-    function hasRole(roles) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        &&  get(/databases/$(database)/documents/users/$(request.auth.uid))
-              .data.roles.hasAny(roles);
-    }
-
-    match /admin/reports/{doc} {
-      allow read: if request.auth != null;        // cualquiera logueado
-      allow write: if hasRole(['admin']);         // función hasRole ya definida
-    }
+ match /databases/{db}/documents {
+  match /notifications/{n} {
+    // lectura: dueño o admin/teacher
+    allow read: if request.auth != null &&
+      (resource.data.userId == request.auth.uid
+       || hasAnyRole(['admin','teacher']));
+    // create solo admin o teacher
+    allow create: if hasAnyRole(['admin','teacher']);
+    // update (marcar read) dueño + admin/teacher
+    allow update: if request.auth != null &&
+      (resource.data.userId == request.auth.uid
+       || hasAnyRole(['admin','teacher']));
+    // delete solo admin
+    allow delete: if hasAnyRole(['admin']);
   }
+
+  function hasAnyRole(r) {
+    return get(/databases/$(db)/documents/users/$(request.auth.uid))
+             .data.roles.hasAny(r);
+  }
+ }
 }

@@ -1,23 +1,29 @@
-import { db } from '../config/firebaseAdmin';
-import { CreateGradeDTO, GradeQuery } from '../domain/dtos/grade.dto';
-import { FirebaseService } from './firebase.service';
-const COL = 'grades';
+import { FirebaseService } from "./firebase.service";
+import { CreateGradeDTO, GradeQuery } from "../domain/dtos/grade.dto";
+import { Query } from "firebase-admin/firestore";
+
+const COL = "grades";
 
 export class GradeService {
-
+  /* CREATE */
   static create(dto: CreateGradeDTO) {
-    const data = { ...dto, attemptDate: new Date() };
-    return FirebaseService.createDoc(COL, data);
+    return FirebaseService.createDoc(COL, {
+      ...dto,
+      date: new Date(),
+    });
   }
 
-  /** Listar con filtros opcionales */
+  /* LIST / FILTER */
   static async list(q: GradeQuery) {
-    let ref: FirebaseFirestore.Query = db.collection(COL);
-    if (q.classId) ref = ref.where('classId', '==', q.classId);
-    if (q.unitId)  ref = ref.where('unitId',  '==', q.unitId);
-    if (q.userId)  ref = ref.where('userId',  '==', q.userId);
+    let query: Query = FirebaseService.collectionRef(COL);
 
-    const snap = await ref.get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (q.groupId) query = query.where("groupId", "==", q.groupId);
+    else if (q.classId) query = query.where("classId", "==", q.classId); // legacy
+
+    if (q.unitId) query = query.where("unitId", "==", q.unitId);
+    if (q.userId) query = query.where("userId", "==", q.userId);
+
+    const snap = await query.get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
 }

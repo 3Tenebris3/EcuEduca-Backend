@@ -1,49 +1,95 @@
-import { FirebaseService } from "./firebase.service";
-import { UserModel } from "../domain/models/user.model";
 import bcrypt from "bcryptjs";
-import { CreateUserDTO, UpdateUserDTO } from "../domain/dtos/user.dto";
+import { FirebaseService } from "./firebase.service";
+import {
+  CreateUserDTO,
+  UpdateUserDTO,
+  AvatarKey,
+} from "../domain/dtos/user.dto";
+import { UserModel } from "../domain/models/user.model";
 
 const COL = "users";
-const SALT_ROUNDS = 10;
+const SALT = 10;
+const now = () => new Date();
 
 export class UserService {
-  /* -------- create -------- */
+  /* CREATE */
   static async createUser(dto: CreateUserDTO): Promise<UserModel> {
-    const hashed = await bcrypt.hash(dto.password, SALT_ROUNDS);
-    const data: Partial<UserModel> = {
+    const hashed = await bcrypt.hash(dto.password, SALT);
+    const data: Omit<UserModel, "id"> = {
       email: dto.email,
-      displayName: dto.displayName,
       password: hashed,
+      displayName: dto.displayName,
+      phone: dto.phone ?? "",
+      avatar: dto.avatar ?? ("avatar1.png" as AvatarKey),
       roles: [dto.role ?? "student"],
       classes: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      teacherId: dto.teacherId ?? "",
+      createdAt: now(),
+      updatedAt: now(),
     };
-    return FirebaseService.createDoc(COL, data);
+    return FirebaseService.createDoc<UserModel>(COL, data);
   }
 
-  /* -------- read -------- */
+  /* READ */
   static getUserById(id: string) {
-    return FirebaseService.getDocById(COL, id);
-  }
-  static findUserByEmail(email: string) {
-    return FirebaseService.findDocsByField(COL, "email", email).then(
-      (r) => r[0] || null
-    );
+    return FirebaseService.getDocById<UserModel>(COL, id);
   }
   static getAllUsers() {
-    return FirebaseService.getCollection(COL);
+    return FirebaseService.getCollection<UserModel>(COL);
+  }
+  static async findByEmail(email: string) {
+    const r = await FirebaseService.findDocsByField<UserModel>(
+      COL,
+      "email",
+      email,
+      "=="
+    );
+    return r[0] ?? null;
   }
 
-  /* -------- update -------- */
+  /* UPDATE */
   static updateUser(id: string, dto: UpdateUserDTO) {
-    dto.updatedAt = new Date();
-    if (dto.password) delete dto.password; // no permitir cambio aquí
-    return FirebaseService.updateDoc(COL, id, dto);
+    if (dto.password) delete dto.password;
+    dto.updatedAt = now();
+    return FirebaseService.updateDoc<UserModel>(COL, id, dto);
   }
 
-  /* -------- delete -------- */
+  /* DELETE */
   static deleteUser(id: string) {
     return FirebaseService.deleteDoc(COL, id);
+  }
+
+  /* AVATAR */
+  static setAvatar(id: string, avatar: AvatarKey) {
+    return FirebaseService.updateDoc<UserModel>(COL, id, {
+      avatar,
+      updatedAt: now(),
+    });
+  }
+
+  /* PASSWORD */
+  static async changePassword(id: string, oldPwd: string, newPwd: string) {
+    const user = await this.getUserById(id);
+    if (!user) return false;
+    const ok = await bcrypt.compare(oldPwd, user.password);
+    if (!ok) return false;
+    const hash = await bcrypt.hash(newPwd, SALT);
+    await FirebaseService.updateDoc(COL, id, { password: hash });
+    return true;
+  }
+
+  /* RELACIONES */
+  static getTeacherOfStudent(studentId: string) {
+    return this.getUserById(studentId).then((st) =>
+      st?.teacherId ? this.getUserById(st.teacherId) : null
+    );
+  }
+  static getStudentsOfTeacher(teacherId: string) {
+    return FirebaseService.findDocsByField<UserModel>(
+      COL,
+      "teacherId",
+      teacherId,
+      "=="
+    );
   }
 }

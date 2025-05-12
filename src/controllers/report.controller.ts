@@ -4,7 +4,19 @@ import { ReportService }     from '../services/report.service';
 
 export class ReportController {
 
-  /** GET /reports */
+  /**
+   * @openapi
+   * /reports:
+   *   get:
+   *     summary: Obtiene el reporte actual del sistema
+   *     tags: [Reportes]
+   *     security: [ bearerAuth: [] ]
+   *     responses:
+   *       200:
+   *         description: Reporte encontrado
+   *       404:
+   *         description: Aún no se ha generado ningún reporte
+   */
   static async get(req: Request, res: Response){
     const doc = await ReportService.get();
     doc
@@ -12,7 +24,17 @@ export class ReportController {
       : res.status(404).json(createResponse(false,404,'No report yet'));
   }
 
-  /** POST /reports/rebuild  (solo admin) */
+  /**
+   * @openapi
+   * /reports/rebuild:
+   *   post:
+   *     summary: Reconstruye el reporte del sistema (solo admin)
+   *     tags: [Reportes]
+   *     security: [ bearerAuth: [] ]
+   *     responses:
+   *       201:
+   *         description: Reporte reconstruido exitosamente
+   */
   static async rebuild(_:Request,res:Response){
     const doc = await ReportService.rebuild();
     res.status(201).json(createResponse(true,201,'Report rebuilt',doc));

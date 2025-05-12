@@ -1,57 +1,67 @@
-import { db } from '../config/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { db } from "../config/firebaseAdmin";
+import {
+  FieldValue,
+  CollectionReference,
+  Query,
+} from "firebase-admin/firestore";
 
-/**
- * Métodos genéricos para interactuar con Firestore (CRUD).
- */
 export class FirebaseService {
-  static async createDoc(collectionName: string, data: any): Promise<any> {
-    // Inserta los datos y añade la propiedad createdAt
-    const ref = await db.collection(collectionName).add({
+  /* util directo */
+  static get FieldValue() {
+    return FieldValue;
+  }
+
+  /* ---------- helpers ---------- */
+  static collectionRef(path: string): FirebaseFirestore.Query {
+  return db.collection(path);
+}
+
+  /* ---------- CRUD genérico con tipado ---------- */
+  static async createDoc<T>(
+    collection: string,
+    data: Omit<T, "id">
+  ): Promise<T> {
+    const now = new Date();
+    const ref = await db.collection(collection).add({
       ...data,
-      createdAt: new Date()
+      createdAt: now,
+      updatedAt: now,
     });
-    // Retornamos explícitamente el objeto combinado:
-    return { id: ref.id, ...data, createdAt: new Date() };
+    return { id: ref.id, ...data, createdAt: now, updatedAt: now } as T;
   }
 
-  static async getDocById(collectionName: string, docId: string): Promise<any> {
-    const doc = await db.collection(collectionName).doc(docId).get();
-    if (!doc.exists) return null;
-    // Retornamos el objeto combinado con el id
-    return { id: doc.id, ...doc.data() };
+  static async getDocById<T>(collection: string, id: string): Promise<T | null> {
+    const snap = await db.collection(collection).doc(id).get();
+    return snap.exists ? ({ id: snap.id, ...snap.data() } as T) : null;
   }
 
-  static async updateDoc(collectionName: string, docId: string, data: any): Promise<any> {
-    await db.collection(collectionName).doc(docId).update({
-      ...data,
-      updatedAt: new Date()
-    });
-    return this.getDocById(collectionName, docId);
+  static async updateDoc<T>(
+    collection: string,
+    id: string,
+    data: Partial<T>
+  ): Promise<T> {
+    const now = new Date();
+    await db.collection(collection).doc(id).update({ ...data, updatedAt: now });
+    const snap = await db.collection(collection).doc(id).get();
+    return { id: snap.id, ...snap.data() } as T;
   }
 
-  static async deleteDoc(collectionName: string, docId: string): Promise<boolean> {
-    await db.collection(collectionName).doc(docId).delete();
-    return true;
+  static deleteDoc(collection: string, id: string) {
+    return db.collection(collection).doc(id).delete();
   }
 
-  static async findDocsByField(collectionName: string, field: string, value: any): Promise<any[]> {
-    const snapshot = await db.collection(collectionName).where(field, '==', value).get();
-    if (snapshot.empty) return [];
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  static async findDocsByField<T>(
+    collection: string,
+    field: string,
+    val: any,
+    op: FirebaseFirestore.WhereFilterOp = "=="
+  ): Promise<T[]> {
+    const snap = await db.collection(collection).where(field, op, val).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as T));
   }
 
-  static async getAllDocs(collectionName: string): Promise<any[]> {
-    const snapshot = await db.collection(collectionName).get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  }
-  
-  // Listar todos los docs de una colección
-  static async getCollection(path: string) {
+  static async getCollection<T>(path: string): Promise<T[]> {
     const snap = await db.collection(path).get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as T));
   }
-
-  // Exponer FieldValue util
-  static get FieldValue() { return FieldValue; }
 }

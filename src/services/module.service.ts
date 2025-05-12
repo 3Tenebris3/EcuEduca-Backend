@@ -1,35 +1,49 @@
-import { CreateModuleDTO, UpdateModuleDTO } from '../domain/dtos/module.dto';
-import { FirebaseService } from './firebase.service';
+import { FirebaseService } from "./firebase.service";
+import {
+  CreateModuleDTO,
+  UpdateModuleDTO,
+} from "../domain/dtos/module.dto";
+
+const COL = "classes";
 
 export class ModuleService {
-  private static path(c: string, u: string) {
-    return `classes/${c}/units/${u}/modules`;
+  private static col(classId: string, unitId: string) {
+    return `${COL}/${classId}/units/${unitId}/modules`;
   }
 
-  static create(c: string, u: string, dto: CreateModuleDTO & { createdBy: string }) {
+  static async create(
+    classId: string,
+    unitId: string,
+    dto: CreateModuleDTO & { createdBy: string }
+  ) {
     const data = {
       ...dto,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isActive:  true
     };
-    return FirebaseService.createDoc(this.path(c, u), data);
+    return FirebaseService.createDoc(this.col(classId, unitId), data);
   }
 
-  static getAll(c: string, u: string) {
-    return FirebaseService.getCollection(this.path(c, u));
+  static getAll(classId: string, unitId: string) {
+    return FirebaseService.getCollection(this.col(classId, unitId));
   }
 
-  static getById(c: string, u: string, m: string) {
-    return FirebaseService.getDocById(this.path(c, u), m);
+  static getById(classId: string, unitId: string, moduleId: string) {
+    return FirebaseService.getDocById(this.col(classId, unitId), moduleId);
   }
 
-  static update(c: string, u: string, m: string, dto: UpdateModuleDTO) {
+  static update(
+    classId: string,
+    unitId: string,
+    moduleId: string,
+    dto: UpdateModuleDTO
+  ) {
     dto.updatedAt = new Date();
-    return FirebaseService.updateDoc(this.path(c, u), m, dto);
+    return FirebaseService.updateDoc(this.col(classId, unitId), moduleId, dto);
   }
 
-  static delete(c: string, u: string, m: string) {
-    return FirebaseService.deleteDoc(this.path(c, u), m);
+  static delete(classId: string, unitId: string, moduleId: string) {
+    return FirebaseService.deleteDoc(this.col(classId, unitId), moduleId);
   }
 }
