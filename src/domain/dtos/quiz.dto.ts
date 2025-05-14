@@ -1,7 +1,9 @@
+/* ---------- Quiz (encabezado) ---------- */
 export interface CreateQuizDTO {
-  title: string;
-  relatedScenario?: string; // opcional para vincular a escenario
-  maxAttempts?: number;
+  title:           string;
+  relatedScenario?: string;      // opcional
+  maxAttempts?:    number;       // 0 = ilimitado
+  durationSec?:    number;       // 0 = sin límite de tiempo
 }
 
 export interface UpdateQuizDTO extends Partial<CreateQuizDTO> {
@@ -9,25 +11,34 @@ export interface UpdateQuizDTO extends Partial<CreateQuizDTO> {
   updatedAt?: Date;
 }
 
-/* ---------- preguntas ---------- */
+/* ---------- Preguntas ---------- */
 export type QuestionType = "multiple_choice" | "true_false" | "short_answer";
 
+/** Cada pregunta guarda sus opciones y el índice de la correcta */
 export interface CreateQuestionDTO {
   questionText: string;
-  type: QuestionType;
-  order: number;
-  createdAt?: Date; 
+  type:         QuestionType;
+  order:        number;          // 1, 2, 3…
+  options:      string[];        // respuestas visibles
+  correct:      number;          // índice en `options`
+  createdAt?:   Date;
 }
 
-export interface UpdateQuestionDTO extends Partial<CreateQuestionDTO> {
-  updatedAt?: Date;
+export interface UpdateQuestionDTO
+  extends Partial<Omit<CreateQuestionDTO, "order">> {
+  order?:      number;
+  updatedAt?:  Date;
 }
 
-/* ---------- respuestas (solo multiple_choice) ---------- */
-export interface CreateAnswerDTO {
-  answerText: string;
-  isCorrect: boolean;
+/* ---------- Attempts ---------- */
+export interface CreateAttemptDTO {
+  quizId:     string;
+  userId:     string;
+  startedAt:  Date;
+  answers:    number[];          // índice marcado por el alumno (-1 sin responder)
 }
-export interface UpdateAnswerDTO extends Partial<CreateAnswerDTO> {
-  updatedAt?: Date;
+
+export interface SubmitQuizDTO {
+  attemptId: string;
+  answers:   number[];           // array completo al “Enviar”
 }

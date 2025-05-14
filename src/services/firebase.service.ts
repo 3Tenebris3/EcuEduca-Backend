@@ -1,9 +1,9 @@
 import { db } from "../config/firebaseAdmin";
 import {
   FieldValue,
-  CollectionReference,
-  Query,
 } from "firebase-admin/firestore";
+
+export type WithId<T = Record<string, unknown>> = T & { id: string };
 
 export class FirebaseService {
   /* util directo */
@@ -17,36 +17,33 @@ export class FirebaseService {
 }
 
   /* ---------- CRUD genérico con tipado ---------- */
-  static async createDoc<T>(
+  static async createDoc<T = any>(
     collection: string,
     data: Omit<T, "id">
-  ): Promise<T> {
-    const now = new Date();
-    const ref = await db.collection(collection).add({
-      ...data,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return { id: ref.id, ...data, createdAt: now, updatedAt: now } as T;
+  ): Promise<WithId<T>> {
+    const ref = await db.collection(collection).add(data);
+    return { id: ref.id, ...(data as T) };
   }
 
-  static async getDocById<T>(collection: string, id: string): Promise<T | null> {
+  static async getDocById<T = any>(
+    collection: string,
+    id: string
+  ): Promise<WithId<T> | null> {
     const snap = await db.collection(collection).doc(id).get();
-    return snap.exists ? ({ id: snap.id, ...snap.data() } as T) : null;
+    return snap.exists ? ({ id: snap.id, ...snap.data() } as WithId<T>) : null;
   }
 
-  static async updateDoc<T>(
+  static async updateDoc<T = any>(
     collection: string,
     id: string,
-    data: Partial<T>
-  ): Promise<T> {
-    const now = new Date();
-    await db.collection(collection).doc(id).update({ ...data, updatedAt: now });
+    data: Partial<Omit<T,"id">>
+  ): Promise<WithId<T>> {
+    await db.collection(collection).doc(id).update(data);
     const snap = await db.collection(collection).doc(id).get();
-    return { id: snap.id, ...snap.data() } as T;
+    return { id:snap.id, ...snap.data() } as WithId<T>;
   }
 
-  static deleteDoc(collection: string, id: string) {
+  static deleteDoc(collection:string,id:string){
     return db.collection(collection).doc(id).delete();
   }
 
@@ -60,8 +57,10 @@ export class FirebaseService {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() } as T));
   }
 
-  static async getCollection<T>(path: string): Promise<T[]> {
-    const snap = await db.collection(path).get();
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as T));
+  static async getCollection<T = any>(
+    collection: string
+  ): Promise<WithId<T>[]> {
+    const snap = await db.collection(collection).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as WithId<T>));
   }
 }
