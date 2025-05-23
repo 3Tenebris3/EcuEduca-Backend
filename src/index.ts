@@ -67,6 +67,15 @@ app.use(
   })
 );
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "API is healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+
 app.listen(3000, '0.0.0.0', () => {
   console.log(`Backend listening on port 3000`);
   console.log(`Swagger docs available at http://localhost:3000/api-docs`);

@@ -1,26 +1,27 @@
-import { firestore } from "firebase-admin";
-import { LeaderboardRow } from "../domain/dtos/leaderboard.dto";
+import { db } from "../config/firebaseAdmin";
+import { LeaderboardRowDTO } from "../domain/dtos/leaderboard.dto";
 
-// src/services/leaderboard.service.ts
-export async function getRankingForTeacher(teacherId: string, limit = 20) {
-    /* 
-       Supongamos que cada documento "scores/{uid}" tiene:
-         - totalPoints (number)
-         - teacherId
-    */
-    const col = firestore().collection("scores");
-    const snap = await col
-      .where("teacherId", "==", teacherId)
-      .orderBy("totalPoints", "desc")
-      .limit(limit)
-      .get();
-  
-    const rows: LeaderboardRow[] = [];
-    let rank = 1;
-    for (const doc of snap.docs) {
-      const { totalPoints, avatar, name } = doc.data();
-      rows.push({ id: doc.id, avatar, name, points: totalPoints, rank: rank++ });
-    }
-    return rows;
-  }
-  
+const COLL = db.collection("leaderboard").doc("global").collection("rows");
+
+export async function getTopN(n = 100): Promise<LeaderboardRowDTO[]> {
+  const snap = await COLL.orderBy("points", "desc").limit(n).get();
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LeaderboardRowDTO, "id">) }));
+}
+
+export async function updateUserPoints(
+  uid: string,
+  delta: number,
+  name: string,
+  avatar: string
+) {
+  const ref = COLL.doc(uid);
+  await db.runTransaction(async (t) => {
+    const doc = await t.get(ref);
+    const prev = doc.exists ? doc.data()?.points || 0 : 0;
+    t.set(
+      ref,
+      { name, avatar, points: prev + delta },
+      { merge: true }
+    );
+  });
+}
