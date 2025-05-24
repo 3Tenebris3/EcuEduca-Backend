@@ -4,6 +4,7 @@ export interface LoginDTO {
 }
 
 export interface RegisterDTO {
+  id?:          string;
   email:        string;
   password:     string;
   displayName:  string;

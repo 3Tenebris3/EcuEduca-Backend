@@ -3,24 +3,24 @@ import { LeaderboardRowDTO } from "../domain/dtos/leaderboard.dto";
 
 const COLL = db.collection("leaderboard").doc("global").collection("rows");
 
-export async function getTopN(n = 100): Promise<LeaderboardRowDTO[]> {
+export async function getTop(n = 100): Promise<LeaderboardRowDTO[]> {
   const snap = await COLL.orderBy("points", "desc").limit(n).get();
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LeaderboardRowDTO, "id">) }));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeaderboardRowDTO));
 }
 
-export async function updateUserPoints(
+export async function addPoints(
   uid: string,
   delta: number,
   name: string,
   avatar: string
-) {
+): Promise<void> {
   const ref = COLL.doc(uid);
   await db.runTransaction(async (t) => {
     const doc = await t.get(ref);
-    const prev = doc.exists ? doc.data()?.points || 0 : 0;
+    const current = doc.exists ? (doc.data()?.points as number) || 0 : 0;
     t.set(
       ref,
-      { name, avatar, points: prev + delta },
+      { name, avatar, points: current + delta },
       { merge: true }
     );
   });

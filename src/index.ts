@@ -16,6 +16,7 @@ import { scenarioRouter } from './routers/scenario.router';
 import { minigameRouter } from './routers/minigame.router';
 import { leaderboardRouter } from './routers/leaderboard.router';
 import { notificationRouter } from './routers/notification.router';
+import { rewardRouter } from './routers/reward.router';
 
 dotenv.config();
 
@@ -34,14 +35,14 @@ app.use(express.json());
 
 // Rutas de la API
 app.use('/auth', authRouter);
-app.use('/auth', authRouter);
 app.use('/users', userRouter);
 app.use('/grades', gradeRouter);
 app.use('/quizzes', quizRouter);
 app.use('/reports', reportRouter);
+app.use("/rewards", rewardRouter);
 app.use('/scenarios', scenarioRouter);
 app.use('/minigames', minigameRouter);
-app.get('/leaderboard', leaderboardRouter);
+app.use("/leaderboard",   leaderboardRouter);
 app.use('/notifications', notificationRouter);
 app.use('/classes/:classId/units', unitRouter);
 app.use('/classes/:classId/units/:unitId/modules', moduleRouter);
