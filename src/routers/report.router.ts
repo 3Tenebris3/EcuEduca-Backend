@@ -1,13 +1,12 @@
-import { Router } from 'express';
-import { ReportController } from '../controllers/report.controller';
-import { jwtAuthMiddleware } from '../middlewares/jwtAuth.middleware';
-import { authorize } from '../middlewares/role.middleware';
+/* src/routers/teacher/report.router.ts */
+import { Router } from "express";
+import { ReportController } from "../controllers/report.controller";
+import { jwtAuthMiddleware } from "../middlewares/jwtAuth.middleware";
+import { roleGuard } from "../middlewares/roleGuard.middleware";
 
-export const reportRouter = Router();
-reportRouter.use(jwtAuthMiddleware);
+export const teacherReportRouter = Router();
 
-/* lectura: cualquier usuario autenticado (docente ve dashboard) */
-reportRouter.get('/', ReportController.get);
+teacherReportRouter.use(jwtAuthMiddleware, roleGuard("teacher"));
 
-/* reconstruir: solo admin */
-reportRouter.post('/rebuild', authorize('admin'), ReportController.rebuild);
+teacherReportRouter.get("/summary",  ReportController.summary);
+teacherReportRouter.get("/students", ReportController.students);

@@ -10,13 +10,20 @@ import { quizRouter } from './routers/quiz.router';
 import { unitRouter } from './routers/unit.router';
 import { gradeRouter } from './routers/grade.router';
 import { swaggerSpec } from './config/swagger.config';
-import { reportRouter } from './routers/report.router';
 import { moduleRouter } from './routers/module.router';
 import { scenarioRouter } from './routers/scenario.router';
 import { minigameRouter } from './routers/minigame.router';
 import { leaderboardRouter } from './routers/leaderboard.router';
 import { notificationRouter } from './routers/notification.router';
 import { rewardRouter } from './routers/reward.router';
+import { fillBlankRouter } from './routers/fillblank.router';
+import { memoryRouter } from './routers/memory.router';
+import { quickPickRouter } from './routers/quickpick.router';
+import { sequenceRouter } from './routers/sequence.router';
+import { triviaRouter } from './routers/trivia.router';
+import { teacherRouter } from './routers/teacher.router';
+import { progressRouter } from './routers/progress.router';
+import { teacherPointsRouter } from './routers/teacherPoints.router';
 
 dotenv.config();
 
@@ -38,13 +45,20 @@ app.use('/auth', authRouter);
 app.use('/users', userRouter);
 app.use('/grades', gradeRouter);
 app.use('/quizzes', quizRouter);
-app.use('/reports', reportRouter);
 app.use("/rewards", rewardRouter);
+app.use("/teacher",  teacherRouter);
+app.use("/progress", progressRouter);
 app.use('/scenarios', scenarioRouter);
 app.use('/minigames', minigameRouter);
+app.use("/minigames/trivia", triviaRouter);
+app.use("/minigames/memory", memoryRouter);
 app.use("/leaderboard",   leaderboardRouter);
 app.use('/notifications', notificationRouter);
+app.use("/minigames/sequence", sequenceRouter);
 app.use('/classes/:classId/units', unitRouter);
+app.use("/teacher/points", teacherPointsRouter);
+app.use("/minigames/quickpick", quickPickRouter);
+app.use("/minigames/fillblank", fillBlankRouter);
 app.use('/classes/:classId/units/:unitId/modules', moduleRouter);
 
 // Configurar Swagger UI

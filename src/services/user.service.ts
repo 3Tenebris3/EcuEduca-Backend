@@ -36,7 +36,7 @@ export async function createUser(dto: RegisterDTO) {
     displayName: dto.displayName,
     email:       dto.email,
     password:    hash,
-    role:        dto.role ?? "student",
+    role:        dto.role ?? "teacher",
     phone:       null,
     avatar:      "avatar1.png",
     teacherId:   null,

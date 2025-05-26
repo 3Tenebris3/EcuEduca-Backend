@@ -1,62 +1,58 @@
 import { db } from '../config/firebaseAdmin';
-import { ReportDTO } from '../domain/dtos/report.dto';
-
-const DOC = 'admin/reports/daily';
+import { ClassSummaryDTO, StudentReportDTO } from "../domain/dtos/report.dto";
 
 export class ReportService {
+  /** ───── quick summary ───── */
+  static async summary(classId: string): Promise<ClassSummaryDTO> {
+    const studentsSnap = await db.collection("users")
+      .where("classes", "array-contains", classId)
+      .get();
 
-  /** Lee el snapshot actual */
-  static async get(): Promise<ReportDTO | null> {
-    const doc = await db.doc(DOC).get();
-    return doc.exists ? (doc.data() as ReportDTO) : null;
+    const studentIds = studentsSnap.docs.map(d => d.id);
+    const totalStudents = studentIds.length || 1;
+
+    const progressSnap = await db.collection("userProgress")
+      .where("userId", "in", studentIds)
+      .get();
+
+    let scenarios = 0, minigames = 0, points = 0;
+    progressSnap.docs.forEach(d => {
+      const p = d.data();
+      scenarios += p.scenariosCompleted?.length || 0;
+      minigames += p.minigamesCompleted?.length || 0;
+      points    += p.points || 0;
+    });
+
+    return {
+      classId,
+      students: totalStudents,
+      scenariosPct: +(scenarios / (totalStudents *  /*máxEsc*/ 10) * 100).toFixed(1),
+      minigamesPct: +(minigames / (totalStudents * /*máxMini*/ 15) * 100).toFixed(1),
+      avgPoints:    +(points / totalStudents).toFixed(1),
+    };
   }
 
-  /** Recalcula usando datos en Firestore */
-  static async rebuild(): Promise<ReportDTO> {
-    /* -------- usuarios -------- */
-    const usersSnap = await db.collection('users').get();
-    const totalUsers = usersSnap.size;
+  /** ───── table of students ───── */
+  static async students(classId: string): Promise<StudentReportDTO[]> {
+    const usersSnap = await db.collection("users")
+      .where("classes", "array-contains", classId)
+      .get();
 
-    /* -------- clases activas -------- */
-    const clsSnap = await db.collection('classes').where('isActive','==',true).get();
-    const activeClasses = clsSnap.size;
+    const rows: StudentReportDTO[] = [];
+    for (const doc of usersSnap.docs) {
+      const u = doc.data();
+      const prog = await db.collection("userProgress").doc(doc.id).get();
+      const p = prog.exists ? prog.data() : {};
 
-    /* -------- promedio quizzes -------- */
-    const gradesSnap = await db.collection('grades')
-                               .where('type','==','quiz').get();
-    const avgQuiz = gradesSnap.empty
-        ? 0
-        : gradesSnap.docs.reduce((s,d)=>s + d.data().score,0) / gradesSnap.size;
-
-    /* -------- escenario y minijuego top (simple count) -------- */
-    const scenCount: Record<string,number> = {};
-    const miniCount: Record<string,number> = {};
-    gradesSnap.docs.forEach(d=>{
-      const g=d.data();
-      if (g.type==='quiz' && g.moduleId?.startsWith('mod-3d'))
-        scenCount[g.moduleId]=(scenCount[g.moduleId]??0)+1;
-      if (g.type==='minigame')
-        miniCount[g.moduleId]=(miniCount[g.moduleId]??0)+1;
-    });
-    const topScenarios = Object.entries(scenCount)
-                               .sort((a,b)=>b[1]-a[1])
-                               .slice(0,3)
-                               .map(e=>e[0]);
-    const mostPlayedMinigame = Object.entries(miniCount)
-                                     .sort((a,b)=>b[1]-a[1])[0]?.[0] ?? '';
-
-    /* -------- construir objeto -------- */
-    const report: ReportDTO = {
-      totalUsers,
-      activeClasses,
-      topScenarios,
-      averageQuizScores: Number(avgQuiz.toFixed(2)),
-      mostPlayedMinigame,
-      generatedAt: new Date()
-    };
-
-    // guardar
-    await db.doc(DOC).set(report);
-    return report;
+      rows.push({
+        id:            doc.id,
+        displayName:   u.displayName,
+        email:         u.email,
+        scenariosDone: p?.scenariosCompleted?.length || 0,
+        minigamesDone: p?.minigamesCompleted?.length || 0,
+        points:        p?.points || 0,
+      });
+    }
+    return rows;
   }
 }
