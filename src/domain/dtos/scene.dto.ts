@@ -1,16 +1,21 @@
-/* Escena que ve el front */
+/* ---------- DTOs visibles para el alumno ---------- */
 export interface SceneMetaDTO {
   id:        string;
   title:     string;
-  preview:   string;        // miniatura PNG/JPG pública
-  completed: boolean;       // ← calculado por el servicio
+  preview:   string;   // URL de miniatura
+  completed: boolean;
 }
 
-/* Al crear/editar desde admin */
+/* ---------- payloads que usa el panel admin ---------- */
+/* domain/dtos/scene.dto */
 export interface CreateSceneDTO {
   id:      string;
   title:   string;
-  preview: string;          // url firmada o pública
-  glbUrl:  string;          // modelo 3-D
-  audio?:  string;          // narración opcional
+  preview: string;
+  glbUrl:  string;
+  audio?:  string;
+  desc:    string;          // ← NUEVO
 }
+
+
+export interface UpdateSceneDTO extends Partial<Omit<CreateSceneDTO, "id">> {}

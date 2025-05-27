@@ -1,45 +1,54 @@
 import { db } from "../config/firebaseAdmin";
-import { CreateSceneDTO, SceneMetaDTO } from "../domain/dtos/scene.dto";
+import {
+  SceneMetaDTO,
+  CreateSceneDTO,
+  UpdateSceneDTO,
+} from "../domain/dtos/scene.dto";
 
-const SCENES = db.collection("scenarios");
-const USER_SCENES = (uid: string) =>
+const SCENES       = db.collection("scenarios");
+const USER_SCENES  = (uid: string) =>
   db.collection("users").doc(uid).collection("doneScenes");
 
-export class SceneService {
-  /* ---------- lista con flag de completado ---------- */
-  static async list(uid: string): Promise<SceneMetaDTO[]> {
-    const [sc, doneSnap] = await Promise.all([
-      SCENES.get(),
-      USER_SCENES(uid).get(),
-    ]);
+/* ---------- alumno ---------- */
+export async function list(uid: string): Promise<SceneMetaDTO[]> {
+  const [all, doneSnap] = await Promise.all([
+    SCENES.get(),
+    USER_SCENES(uid).get(),
+  ]);
 
-    const doneIds = new Set(doneSnap.docs.map(d => d.id));
+  const done = new Set(doneSnap.docs.map((d) => d.id));
 
-    return sc.docs.map(d => {
-      const { title, preview } = d.data();
-      return {
-        id: d.id,
-        title,
-        preview,
-        completed: doneIds.has(d.id),
-      } as SceneMetaDTO;
-    });
-  }
+  return all.docs.map((d) => ({
+    id:        d.id,
+    title:     d.data().title,
+    preview:   d.data().preview,
+    completed: done.has(d.id),
+  }));
+}
 
-  /* ---------- detalle ---------- */
-  static async get(id: string) {
-    const snap = await SCENES.doc(id).get();
-    if (!snap.exists) throw new Error("Scene not found");
-    return snap.data();
-  }
+export async function get(id: string) {
+  const doc = await SCENES.doc(id).get();
+  if (!doc.exists) throw new Error("Scene not found");
+  return doc.data();
+}
 
-  /* ---------- marcar como completada ---------- */
-  static async markDone(id: string, uid: string) {
-    await USER_SCENES(uid).doc(id).set({ at: new Date() });
-  }
+export async function markDone(sceneId: string, uid: string) {
+  await USER_SCENES(uid).doc(sceneId).set({ at: new Date() });
+}
 
-  /* ---------- crear/editar (admin) ---------- */
-  static async upsert(dto: CreateSceneDTO) {
-    await SCENES.doc(dto.id).set(dto, { merge:true });
-  }
+/* ---------- admin ---------- */
+export async function create(dto: CreateSceneDTO) {
+  const ref = SCENES.doc(dto.id);
+  const exists = await ref.get();
+  if (exists.exists) throw new Error("ID already used");
+  await ref.set(dto);
+  return dto;
+}
+
+export async function update(id: string, dto: UpdateSceneDTO) {
+  await SCENES.doc(id).update(dto);
+}
+
+export async function remove(id: string) {
+  await SCENES.doc(id).delete();
 }

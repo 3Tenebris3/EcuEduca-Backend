@@ -1,7 +1,7 @@
-/* roles */
+/* ───── Roles ───── */
 export type UserRole = "student" | "teacher" | "admin" | "parent";
 
-/* avatares oficiales */
+/* ───── Avatares oficiales ───── */
 export const ALLOWED_AVATARS = [
   "avatar1.png","avatar2.png","avatar3.png","avatar4.png","avatar5.png",
   "avatar6.png","avatar7.png","avatar8.png","avatar9.png","avatar10.png",
@@ -10,7 +10,7 @@ export const ALLOWED_AVATARS = [
 ] as const;
 export type AvatarKey = typeof ALLOWED_AVATARS[number];
 
-/* respuesta normalizada hacia el front */
+/* ───── DTOs que el front consume ───── */
 export interface UserDTO {
   id:          string;
   displayName: string;
@@ -18,7 +18,21 @@ export interface UserDTO {
   role:        UserRole;
   phone?:      string;
   avatar:      AvatarKey;
+  teacherId?:  string;
+  points?:     number;
 }
+
+/* CREATE / UPDATE desde panel admin */
+export interface CreateUserDTO {
+  displayName: string;
+  email:       string;
+  password:    string;
+  role?:       UserRole;
+  phone?:      string;
+  avatar?:     AvatarKey;
+  teacherId?:  string;
+}
+export interface UpdateUserDTO extends Omit<Partial<CreateUserDTO>, "password"> {}
 
 /* PATCH avatar */
 export interface UpdateAvatarDTO { avatar: AvatarKey; }

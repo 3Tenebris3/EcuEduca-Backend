@@ -24,6 +24,7 @@ import { triviaRouter } from './routers/trivia.router';
 import { teacherRouter } from './routers/teacher.router';
 import { progressRouter } from './routers/progress.router';
 import { teacherPointsRouter } from './routers/teacherPoints.router';
+import { classRouter } from './routers/class.router';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use("/teacher",  teacherRouter);
 app.use("/progress", progressRouter);
 app.use('/scenarios', scenarioRouter);
 app.use('/minigames', minigameRouter);
+app.use("/admin/classes", classRouter);
 app.use("/minigames/trivia", triviaRouter);
 app.use("/minigames/memory", memoryRouter);
 app.use("/leaderboard",   leaderboardRouter);
