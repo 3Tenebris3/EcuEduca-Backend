@@ -28,6 +28,7 @@ export async function createUser(dto: RegisterDTO) {
     phone: null,
     avatar: "avatar1.png",
     teacherId: null,
+    isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

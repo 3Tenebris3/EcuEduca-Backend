@@ -16,7 +16,7 @@ userRouter.get( "/me/teacher",       UserController.myTeacher);
 userRouter.get( "/me/students",      UserController.myStudents);
 
 /* CRUD solo para admins */
-userRouter.get(   "/",               roleGuard("admin"), UserController.list);
+userRouter.get(   "/",               UserController.list);
 userRouter.get(   "/role/:role",     roleGuard("admin"), UserController.listByRole);
 userRouter.get(   "/:id",            roleGuard("admin"), UserController.get);
 userRouter.post(  "/",               roleGuard("admin"), UserController.create);

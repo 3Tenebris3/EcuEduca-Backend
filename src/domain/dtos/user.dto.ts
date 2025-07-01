@@ -1,5 +1,5 @@
 /* ───── Roles ───── */
-export type UserRole = "student" | "teacher" | "admin" | "parent";
+export type UserRole = "student" | "teacher" | "admin";
 
 /* ───── Avatares oficiales ───── */
 export const ALLOWED_AVATARS = [
@@ -20,6 +20,7 @@ export interface UserDTO {
   avatar:      AvatarKey;
   teacherId?:  string;
   points?:     number;
+  isActive?:   boolean;
 }
 
 /* CREATE / UPDATE desde panel admin */
@@ -31,6 +32,7 @@ export interface CreateUserDTO {
   phone?:      string;
   avatar?:     AvatarKey;
   teacherId?:  string;
+  isActive?:   boolean;
 }
 export interface UpdateUserDTO extends Omit<Partial<CreateUserDTO>, "password"> {}
 

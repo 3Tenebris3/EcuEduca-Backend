@@ -52,7 +52,7 @@ app.use("/progress", progressRouter);
 app.use('/scenarios', scenarioRouter);
 app.use('/minigames', minigameRouter);
 app.use("/admin/classes", classRouter);
-app.use("/minigames/trivia", triviaRouter);
+app.use("/trivia", triviaRouter);
 app.use("/minigames/memory", memoryRouter);
 app.use("/leaderboard",   leaderboardRouter);
 app.use('/notifications', notificationRouter);
